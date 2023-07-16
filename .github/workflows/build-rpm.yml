@@ -29,6 +29,7 @@ jobs:
           mock -r fedora-$FEDORAVERSION-x86_64-rpmfusion_free -nN --rebuild *.src.rpm --resultdir .
       - name: Upload artifact
         uses: actions/upload-artifact@v1.0.0
+        if: success() || failure()
         with:
           name: RPM
           path: .
