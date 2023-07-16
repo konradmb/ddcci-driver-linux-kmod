@@ -8,7 +8,7 @@
 # name should have a -kmod suffix
 Name:           ddcci-driver-linux-kmod
 
-Version:        0.4.3.master+mr12
+Version:        0.4.3.master+mr12+mr13
 Release:        1%{?dist}.1
 Summary:        Kernel module(s)
 
@@ -16,7 +16,10 @@ Group:          System Environment/Kernel
 
 License:        GPL-2
 URL:            https://gitlab.com/ddcci-driver-linux/ddcci-driver-linux
-Source0:        https://gitlab.com/ddcci-driver-linux/ddcci-driver-linux/-/archive/merge-requests/12/head/ddcci-driver-linux.tar.gz
+Source0:        https://gitlab.com/ddcci-driver-linux/ddcci-driver-linux/-/archive/master/ddcci-driver-linux-master.tar.gz
+
+Patch0:         12.patch
+Patch1:         13.patch
 
 BuildRequires:  %{_bindir}/kmodtool
 
@@ -48,15 +51,16 @@ BuildRequires:  %{_bindir}/kmodtool
 #kmodtool  --target %{_target_cpu}  --repo %{repo} --kmodname %{name} %{?buildforkernels:--%{buildforkernels}} %{?kernels:--for-kernels "%{?kernels}"} 2>/dev/null
 kmodtool  --target %{_target_cpu}  --repo rpmfusion --kmodname %{name} %{?buildforkernels:--%{buildforkernels}} %{?kernels:--for-kernels "%{?kernels}"} 2>/dev/null
 
-%setup -q -c -T -a 0
-
-# apply patches and do other stuff here
-# pushd foo-%{version}
-# #patch0 -p1 -b .suffix
-# popd
+%setup -c -T -a 0
 
 mv ddcci-driver-linux-* ddcci-driver-linux
 ls
+# apply patches and do other stuff here
+pushd ddcci-driver-linux
+ls
+# #patch0 -p1 -b .suffix
+%autopatch -p1
+popd
 
 for kernel_version in %{?kernel_versions} ; do
     cp -a ddcci-driver-linux _kmod_build_${kernel_version%%___*}
@@ -95,8 +99,8 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
-* Mon May 30 2022 Konrad
-- 
+* Sun Jul 16 2023 Konrad
+- Added 6.4 kernel compatibility patch
 
 %package common
 Summary:    Kernel module(s)
