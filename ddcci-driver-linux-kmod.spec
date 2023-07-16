@@ -16,7 +16,10 @@ Group:          System Environment/Kernel
 
 License:        GPL-2
 URL:            https://gitlab.com/ddcci-driver-linux/ddcci-driver-linux
-Source0:        https://gitlab.com/ddcci-driver-linux/ddcci-driver-linux/-/archive/merge-requests/12/head/ddcci-driver-linux.tar.gz
+Source0:        https://gitlab.com/ddcci-driver-linux/ddcci-driver-linux/-/archive/master/ddcci-driver-linux-master.tar.gz
+
+Patch0:         12.patch
+Patch1:         13.patch
 
 BuildRequires:  %{_bindir}/kmodtool
 
@@ -95,7 +98,8 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
-%autochangelog
+* Sun Jul 16 2023 Konrad
+- Added 6.4 kernel compatibility patch
 
 %package common
 Summary:    Kernel module(s)

@@ -1,0 +1,147 @@
+From 1ef6079679acc455f75057dd7097b5b494a241dc Mon Sep 17 00:00:00 2001
+From: Tj <hacker@iam.tj>
+Date: Sun, 14 May 2023 23:12:56 +0100
+Subject: [PATCH] Compatible with v6.2, v6.3 changes
+
+Several function prototypes were changed to pass const structs,
+bus_type.p was removed so cannot be used to detect if bus is ready, and
+prototype of register function was changed.
+---
+ ddcci/ddcci.c         | 20 ++++++++++++++------
+ dkms.conf             |  3 ++-
+ include/linux/ddcci.h |  9 +++++++--
+ 3 files changed, 23 insertions(+), 9 deletions(-)
+
+diff --git a/ddcci/ddcci.c b/ddcci/ddcci.c
+index ea76352..dc0f342 100644
+--- a/ddcci/ddcci.c
++++ b/ddcci/ddcci.c
+@@ -35,6 +35,7 @@
+ static unsigned int delay = 60;
+ static unsigned short autoprobe_addrs[127] = {0xF0, 0xF2, 0xF4, 0xF6, 0xF8};
+ static int autoprobe_addr_count = 5;
++static bool is_registered;
+ 
+ static dev_t ddcci_cdev_first;
+ static dev_t ddcci_cdev_next;
+@@ -930,8 +931,7 @@ static struct attribute *ddcci_char_device_attrs[] = {
+ ATTRIBUTE_GROUPS(ddcci_char_device);
+ 
+ /* DDC/CI bus */
+-
+-static int ddcci_device_uevent(struct device *dev, struct kobj_uevent_env *env)
++static int ddcci_device_uevent(CSTRUCT device *dev, struct kobj_uevent_env *env)
+ {
+ 	struct ddcci_device	*device = to_ddcci_device(dev);
+ 	char model[ARRAY_SIZE(device->model)];
+@@ -1011,7 +1011,7 @@ static void ddcci_device_release(struct device *dev)
+ 	kfree(device);
+ }
+ 
+-static char *ddcci_devnode(struct device *dev,
++static char *ddcci_devnode(CSTRUCT device *dev,
+ 			 umode_t *mode, kuid_t *uid, kgid_t *gid)
+ {
+ 	struct ddcci_device *device;
+@@ -1021,7 +1021,7 @@ static char *ddcci_devnode(struct device *dev,
+ 			 device->i2c_client->adapter->nr);
+ }
+ 
+-static char *ddcci_dependent_devnode(struct device *dev,
++static char *ddcci_dependent_devnode(CSTRUCT device *dev,
+ 			 umode_t *mode, kuid_t *uid, kgid_t *gid)
+ {
+ 	struct ddcci_device *device;
+@@ -1065,7 +1065,7 @@ static struct device_type ddcci_dependent_type = {
+  * ddcci_verify_device - return parameter as ddcci_device, or NULL
+  * @dev: device, probably from some driver model iterator
+  */
+-struct ddcci_device *ddcci_verify_device(struct device *dev)
++struct ddcci_device *ddcci_verify_device(CSTRUCT device *dev)
+ {
+ 	if (unlikely(!dev))
+ 		return NULL;
+@@ -1100,7 +1100,7 @@ int ddcci_register_driver(struct module *owner, struct ddcci_driver *driver)
+ 	int ret;
+ 
+ 	/* Can't register until after driver model init */
+-	if (unlikely(WARN_ON(!ddcci_bus_type.p)))
++	if (unlikely(WARN_ON(!is_registered)))
+ 		return -EAGAIN;
+ 
+ 	pr_debug("registering driver [%s]\n", driver->driver.name);
+@@ -1672,8 +1672,14 @@ static int ddcci_detect(struct i2c_client *client, struct i2c_board_info *info)
+ }
+ 
+ /* I2C probe function */
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 3, 0)
++static int ddcci_probe(struct i2c_client *client)
++{
++	const struct i2c_device_id *id = i2c_client_get_device_id(client);
++#else
+ static int ddcci_probe(struct i2c_client *client, const struct i2c_device_id *id)
+ {
++#endif
+ 	int i, ret = -ENODEV, tmp;
+ 	unsigned char main_addr, addr;
+ 	struct ddcci_bus_drv_data *drv_data;
+@@ -1857,6 +1863,7 @@ static int __init ddcci_module_init(void)
+ 		goto err_drvreg;
+ 	}
+ 
++	is_registered = true;
+ 	pr_debug("ddcci driver initialized\n");
+ 
+ 	return 0;
+@@ -1886,6 +1893,7 @@ static void __exit ddcci_module_exit(void)
+ 
+ 	i2c_del_driver(&ddcci_driver);
+ 	bus_unregister(&ddcci_bus_type);
++	is_registered = false;
+ 	unregister_chrdev_region(ddcci_cdev_first, 128);
+ }
+ 
+diff --git a/dkms.conf b/dkms.conf
+index 61cfae8..65ccbde 100644
+--- a/dkms.conf
++++ b/dkms.conf
+@@ -7,5 +7,6 @@ BUILT_MODULE_LOCATION[0]="ddcci/"
+ BUILT_MODULE_LOCATION[1]="ddcci-backlight/"
+ DEST_MODULE_LOCATION[0]="/extra"
+ DEST_MODULE_LOCATION[1]="/extra"
+-MAKE[0]="make KVER=$kernelver -C ${dkms_tree}/${PACKAGE_NAME}/${PACKAGE_VERSION}/build"
++#MAKE[0]="make KVER=$kernelver -C ${dkms_tree}/${PACKAGE_NAME}/${PACKAGE_VERSION}/build"
++MAKE[0]="make KVER=$kernelver"
+ AUTOINSTALL="yes"
+diff --git a/include/linux/ddcci.h b/include/linux/ddcci.h
+index a219f03..666b995 100644
+--- a/include/linux/ddcci.h
++++ b/include/linux/ddcci.h
+@@ -17,9 +17,14 @@
+ #include <linux/mod_devicetable.h>
+ #include <linux/device.h>
+ #include <linux/cdev.h>
++#include <linux/version.h>
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 2, 0)
++#define CSTRUCT const struct
++#else
++#define CSTRUCT struct
++#endif
+ 
+ #define DDCCI_MODULE_PREFIX "ddcci:"
+-
+ /* Special addresses */
+ 
+ /* default device address (even) */
+@@ -132,7 +137,7 @@ int ddcci_register_driver(struct module *owner, struct ddcci_driver *driver);
+ 	ddcci_register_driver(THIS_MODULE, driver)
+ void ddcci_del_driver(struct ddcci_driver *driver);
+ 
+-struct ddcci_device *ddcci_verify_device(struct device *dev);
++struct ddcci_device *ddcci_verify_device(CSTRUCT device *dev);
+ 
+ #define module_ddcci_driver(__ddcci_driver) \
+ 	module_driver(__ddcci_driver, ddcci_add_driver, \
+-- 
+GitLab
+
