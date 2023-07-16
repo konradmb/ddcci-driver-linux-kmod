@@ -23,12 +23,13 @@ jobs:
       - name: Run a multi-line script
         run: |
           dnf in -y https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$FEDORAVERSION.noarch.rpm
-          dnf in -y rpmdevtools mock mock-rpmfusion-free
+          dnf in -y rpmdevtools 'dnf-command(builddep)'
+          dnf builddep -y $SPECFILE
           spectool -g $SPECFILE
-          rpmbuild -bs $SPECFILE --define "_topdir ."  --define "_sourcedir ."  --define "_srcrpmdir ."
-          mock -r fedora-$FEDORAVERSION-x86_64-rpmfusion_free -nN --rebuild *.src.rpm --resultdir .
+          rpmbuild -ba $SPECFILE --buildroot "$PWD"
       - name: Upload artifact
         uses: actions/upload-artifact@v1.0.0
+        if: success() || failure()
         with:
           name: RPM
           path: .
