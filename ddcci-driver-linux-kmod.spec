@@ -59,7 +59,7 @@ ls
 pushd ddcci-driver-linux
 ls
 # #patch0 -p1 -b .suffix
-%autopatch
+%autopatch -p1
 popd
 
 for kernel_version in %{?kernel_versions} ; do
