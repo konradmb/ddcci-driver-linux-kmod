@@ -30,6 +30,6 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v1.0.0
         with:
-          name: Binary RPM
-          path: ${{ steps.rpm.outputs.rpm_dir_path }}
+          name: RPM
+          path: .
 
