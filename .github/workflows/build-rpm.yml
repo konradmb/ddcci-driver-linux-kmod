@@ -13,7 +13,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     container:
-      image: fedora:$FEDORAVERSION
+      image: fedora:38
       env:
         SPECFILE: "ddcci-driver-linux-kmod.spec"
     steps:
