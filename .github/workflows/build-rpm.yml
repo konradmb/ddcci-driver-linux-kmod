@@ -8,14 +8,14 @@ on:
 
 env:
   FEDORAVERSION: 38
+  SPECFILE: "ddcci-driver-linux-kmod.spec"
 
 jobs:
   build:
     runs-on: ubuntu-latest
     container:
       image: fedora:38
-      env:
-        SPECFILE: "ddcci-driver-linux-kmod.spec"
+      options: --privileged
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
@@ -27,4 +27,9 @@ jobs:
           spectool -g $SPECFILE
           rpmbuild -bs $SPECFILE --define "_topdir ."  --define "_sourcedir ."  --define "_srcrpmdir ."
           mock -r fedora-$FEDORAVERSION-x86_64-rpmfusion_free -nN --rebuild *.src.rpm --resultdir .
+      - name: Upload artifact
+        uses: actions/upload-artifact@v1.0.0
+        with:
+          name: Binary RPM
+          path: ${{ steps.rpm.outputs.rpm_dir_path }}
 
