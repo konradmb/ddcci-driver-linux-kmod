@@ -51,7 +51,7 @@ BuildRequires:  %{_bindir}/kmodtool
 #kmodtool  --target %{_target_cpu}  --repo %{repo} --kmodname %{name} %{?buildforkernels:--%{buildforkernels}} %{?kernels:--for-kernels "%{?kernels}"} 2>/dev/null
 kmodtool  --target %{_target_cpu}  --repo rpmfusion --kmodname %{name} %{?buildforkernels:--%{buildforkernels}} %{?kernels:--for-kernels "%{?kernels}"} 2>/dev/null
 
-%setup -q -c -T -a 0
+%autosetup -c -T -a 0
 
 # apply patches and do other stuff here
 # pushd foo-%{version}
