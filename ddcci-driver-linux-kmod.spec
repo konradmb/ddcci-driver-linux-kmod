@@ -51,15 +51,15 @@ BuildRequires:  %{_bindir}/kmodtool
 #kmodtool  --target %{_target_cpu}  --repo %{repo} --kmodname %{name} %{?buildforkernels:--%{buildforkernels}} %{?kernels:--for-kernels "%{?kernels}"} 2>/dev/null
 kmodtool  --target %{_target_cpu}  --repo rpmfusion --kmodname %{name} %{?buildforkernels:--%{buildforkernels}} %{?kernels:--for-kernels "%{?kernels}"} 2>/dev/null
 
-%autosetup -c -T -a 0
-
-# apply patches and do other stuff here
-# pushd foo-%{version}
-# #patch0 -p1 -b .suffix
-# popd
+%setup -c -T -a 0
 
 mv ddcci-driver-linux-* ddcci-driver-linux
 ls
+# apply patches and do other stuff here
+pushd ddcci-driver-linux
+# #patch0 -p1 -b .suffix
+%autopatch
+popd
 
 for kernel_version in %{?kernel_versions} ; do
     cp -a ddcci-driver-linux _kmod_build_${kernel_version%%___*}
