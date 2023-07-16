@@ -8,7 +8,7 @@
 # name should have a -kmod suffix
 Name:           ddcci-driver-linux-kmod
 
-Version:        0.4.3.master+mr12
+Version:        0.4.3.master+mr12+mr13
 Release:        1%{?dist}.1
 Summary:        Kernel module(s)
 
