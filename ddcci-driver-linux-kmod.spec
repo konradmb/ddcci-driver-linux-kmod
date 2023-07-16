@@ -95,8 +95,7 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
-* Mon May 30 2022 Konrad
-- 
+%autochangelog
 
 %package common
 Summary:    Kernel module(s)
