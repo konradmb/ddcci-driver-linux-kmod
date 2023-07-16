@@ -57,6 +57,7 @@ mv ddcci-driver-linux-* ddcci-driver-linux
 ls
 # apply patches and do other stuff here
 pushd ddcci-driver-linux
+ls
 # #patch0 -p1 -b .suffix
 %autopatch
 popd
